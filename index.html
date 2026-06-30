@@ -113,11 +113,47 @@
       <span class="favorite-hint">★ 常用</span>
       <button id="customAppButton" class="custom-link">＋ 自定义应用</button>
     </div>
+    <button id="screenshotImportButton" class="import-entry">
+      <span class="import-icon">▣</span>
+      <span><strong>从桌面截图导入</strong><small>本地识别 App 名称，图片不会上传</small></span>
+      <b>›</b>
+    </button>
     <div id="catalogList" class="catalog-list"></div>
     <div id="catalogEmpty" class="catalog-empty hidden">
       <span>⌕</span>
       <strong>没有找到应用</strong>
       <small>试试其他关键词，或添加自定义应用。</small>
+    </div>
+  </section>
+
+  <section id="importSheet" class="sheet compact-sheet hidden" aria-modal="true" role="dialog">
+    <div class="grabber"></div>
+    <div class="sheet-header">
+      <div>
+        <p class="eyebrow">智能导入</p>
+        <h2>识别桌面截图</h2>
+      </div>
+      <button id="closeImportSheet" class="text-button">取消</button>
+    </div>
+    <div class="import-body">
+      <p class="import-help">选择一张或多张保留了应用名称的 iPhone 桌面截图。首次识别需要下载中文识别模型。</p>
+      <label class="upload-zone">
+        <input id="screenshotInput" type="file" accept="image/*" multiple>
+        <span>＋</span>
+        <strong>选择桌面截图</strong>
+        <small>支持 PNG、JPG，可多选</small>
+      </label>
+      <div id="importProgress" class="import-progress hidden">
+        <span><i id="importProgressBar"></i></span>
+        <p id="importProgressText">准备识别…</p>
+      </div>
+      <div id="importResults" class="import-results hidden">
+        <div class="import-result-title">
+          <strong>识别结果</strong><small id="importResultCount">0 个匹配</small>
+        </div>
+        <div id="importResultList"></div>
+        <button id="confirmImportButton" class="primary-button wide-button">添加识别到的应用</button>
+      </div>
     </div>
   </section>
 
@@ -153,6 +189,7 @@
   </section>
 
   <div id="toast" class="toast hidden" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
