@@ -48,6 +48,7 @@ let activeGroup = "全部";
 let classificationMode = localStorage.getItem("colordock-mode") || "color";
 let catalogMode = "all";
 let toastTimer;
+let detectedAppIds = [];
 
 const filters = document.querySelector("#filters");
 const appGrid = document.querySelector("#appGrid");
@@ -204,6 +205,7 @@ function openSheet() {
 
 function closeSheet() {
   closeCustomSheet();
+  closeImportSheet();
   sheet.classList.add("hidden");
   backdrop.classList.add("hidden");
   document.body.style.overflow = "";
@@ -237,6 +239,84 @@ function openCustomSheet() {
 
 function closeCustomSheet() {
   document.querySelector("#customSheet").classList.add("hidden");
+}
+
+function openImportSheet() {
+  document.querySelector("#importSheet").classList.remove("hidden");
+}
+
+function closeImportSheet() {
+  document.querySelector("#importSheet").classList.add("hidden");
+}
+
+async function recognizeScreenshots(files) {
+  if (!files.length) return;
+  if (!window.Tesseract) {
+    showToast("识别组件加载失败，请检查网络");
+    return;
+  }
+  const progress = document.querySelector("#importProgress");
+  const bar = document.querySelector("#importProgressBar");
+  const text = document.querySelector("#importProgressText");
+  const results = document.querySelector("#importResults");
+  progress.classList.remove("hidden");
+  results.classList.add("hidden");
+  detectedAppIds = [];
+  let recognizedText = "";
+
+  try {
+    for (let index = 0; index < files.length; index++) {
+      text.textContent = `正在识别第 ${index + 1} / ${files.length} 张截图…`;
+      const result = await Tesseract.recognize(files[index], "chi_sim+eng", {
+        logger: message => {
+          if (message.status === "recognizing text") {
+            const fileProgress = message.progress || 0;
+            const total = ((index + fileProgress) / files.length) * 100;
+            bar.style.width = `${Math.round(total)}%`;
+          }
+        }
+      });
+      recognizedText += `\n${result.data.text}`;
+    }
+    const normalized = recognizedText.replace(/\s+/g, "").toLowerCase();
+    detectedAppIds = catalog
+      .filter(app => normalized.includes(app.name.replace(/\s+/g, "").toLowerCase()))
+      .map(app => app.id);
+    bar.style.width = "100%";
+    text.textContent = detectedAppIds.length ? "识别完成" : "暂未匹配到目录中的应用";
+    renderImportResults();
+  } catch (error) {
+    text.textContent = "识别失败，请换一张更清晰的截图";
+    showToast("截图识别失败");
+  }
+}
+
+function renderImportResults() {
+  const results = document.querySelector("#importResults");
+  const list = document.querySelector("#importResultList");
+  const apps = catalog.filter(app => detectedAppIds.includes(app.id));
+  document.querySelector("#importResultCount").textContent = `${apps.length} 个匹配`;
+  list.innerHTML = apps.length ? apps.map(app => `
+    <div class="import-result-row">
+      <span class="catalog-icon ${["白色", "黄色"].includes(app.group) ? "light-icon" : ""}" style="--app-color:${app.color}">${escapeHTML(app.short)}</span>
+      <label>${escapeHTML(app.name)}<small>${app.group} · ${app.category}</small></label>
+      <input type="checkbox" value="${app.id}" checked aria-label="导入${escapeHTML(app.name)}">
+    </div>
+  `).join("") : `<div class="catalog-empty"><strong>没有匹配结果</strong><small>建议截取普通桌面页面，并确保图标名称清晰可见。</small></div>`;
+  document.querySelector("#confirmImportButton").classList.toggle("hidden", apps.length === 0);
+  results.classList.remove("hidden");
+}
+
+function confirmScreenshotImport() {
+  const ids = [...document.querySelectorAll("#importResultList input:checked")].map(input => input.value);
+  ids.forEach(id => selected.add(id));
+  save();
+  renderCatalog(searchInput.value);
+  renderFilters();
+  renderApps();
+  renderFavorites();
+  closeImportSheet();
+  showToast(`已导入 ${ids.length} 个应用`);
 }
 
 function addCustomApp() {
@@ -298,6 +378,10 @@ document.querySelector("#showSelectedButton").addEventListener("click", () => se
 document.querySelector("#colorModeButton").addEventListener("click", () => setClassificationMode("color"));
 document.querySelector("#categoryModeButton").addEventListener("click", () => setClassificationMode("category"));
 document.querySelector("#customAppButton").addEventListener("click", openCustomSheet);
+document.querySelector("#screenshotImportButton").addEventListener("click", openImportSheet);
+document.querySelector("#closeImportSheet").addEventListener("click", closeImportSheet);
+document.querySelector("#screenshotInput").addEventListener("change", event => recognizeScreenshots([...event.target.files]));
+document.querySelector("#confirmImportButton").addEventListener("click", confirmScreenshotImport);
 document.querySelector("#closeCustomSheet").addEventListener("click", closeCustomSheet);
 document.querySelector("#saveCustomApp").addEventListener("click", addCustomApp);
 
