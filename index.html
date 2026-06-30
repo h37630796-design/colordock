@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f6f3ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ColorDock">
+  <title>ColorDock</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+        </span>
+        <div>
+          <p class="eyebrow">你的彩色桌面</p>
+          <h1>ColorDock</h1>
+        </div>
+      </div>
+      <button id="manageButton" class="manage-button" aria-label="管理应用">
+        <span>管理</span><b>＋</b>
+      </button>
+    </header>
+
+    <section class="home-search">
+      <span class="search-symbol" aria-hidden="true">⌕</span>
+      <input id="homeSearchInput" type="search" placeholder="搜索已添加的 App">
+      <span class="home-stat">
+        <strong id="appCount">0</strong> 个
+        <i></i>
+        <strong id="colorCount">0</strong> <small id="metricLabel">种颜色</small>
+      </span>
+    </section>
+
+    <section id="favoriteSection" class="favorites-section">
+      <div class="section-line">
+        <div>
+          <p class="eyebrow">快速打开</p>
+          <h2>常用 App</h2>
+        </div>
+        <button id="editFavoritesButton" class="quiet-button">编辑</button>
+      </div>
+      <div id="favoriteList" class="favorite-list"></div>
+    </section>
+
+    <div class="classification-switch" aria-label="分类方式">
+      <button id="colorModeButton" class="mode-button active">
+        <span class="mode-symbol">●</span>
+        <span><strong>颜色分类</strong><small>按视觉色彩</small></span>
+      </button>
+      <button id="categoryModeButton" class="mode-button">
+        <span class="mode-symbol grid-symbol">⌗</span>
+        <span><strong>内容分类</strong><small>按应用用途</small></span>
+      </button>
+    </div>
+
+    <div class="filter-title">
+      <span id="filterTitleText">探索色彩</span>
+      <small>滑动查看更多</small>
+    </div>
+    <nav id="filters" class="filters" aria-label="颜色筛选"></nav>
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">应用分组</p>
+        <h2 id="groupTitle">全部应用</h2>
+      </div>
+      <span id="groupCount" class="count-badge">0</span>
+    </div>
+    <section id="appGrid" class="app-grid" aria-live="polite"></section>
+
+    <section id="emptyState" class="empty hidden">
+      <div class="empty-orb">＋</div>
+      <h2>这一组还是空的</h2>
+      <p>添加几个应用，ColorDock 会替你归好颜色。</p>
+      <button id="emptyAddButton" class="primary-button">添加应用</button>
+    </section>
+
+    <nav class="bottom-dock" aria-label="主导航">
+      <button class="dock-item active" aria-label="首页">
+        <span class="dock-icon">⌂</span><small>首页</small>
+      </button>
+      <button id="dockAddButton" class="dock-main" aria-label="添加应用">＋</button>
+      <button id="dockManageButton" class="dock-item" aria-label="应用库">
+        <span class="dock-icon">◫</span><small>应用库</small>
+      </button>
+    </nav>
+  </main>
+
+  <div id="sheetBackdrop" class="backdrop hidden"></div>
+  <section id="manageSheet" class="sheet hidden" aria-modal="true" role="dialog">
+    <div class="grabber"></div>
+    <div class="sheet-header">
+      <div>
+        <p class="eyebrow">应用目录</p>
+        <h2>管理应用</h2>
+        <small id="sheetSummary" class="sheet-summary">已添加 0 个</small>
+      </div>
+      <button id="closeSheet" class="text-button">完成</button>
+    </div>
+    <label class="search">
+      <span>⌕</span>
+      <input id="searchInput" type="search" placeholder="搜索应用">
+    </label>
+    <div class="catalog-tools">
+      <button id="showAllButton" class="mini-filter active">全部</button>
+      <button id="showSelectedButton" class="mini-filter">已添加</button>
+      <span class="favorite-hint">★ 常用</span>
+      <button id="customAppButton" class="custom-link">＋ 自定义应用</button>
+    </div>
+    <div id="catalogList" class="catalog-list"></div>
+    <div id="catalogEmpty" class="catalog-empty hidden">
+      <span>⌕</span>
+      <strong>没有找到应用</strong>
+      <small>试试其他关键词，或添加自定义应用。</small>
+    </div>
+  </section>
+
+  <section id="customSheet" class="sheet compact-sheet hidden" aria-modal="true" role="dialog">
+    <div class="grabber"></div>
+    <div class="sheet-header">
+      <div>
+        <p class="eyebrow">新建快捷入口</p>
+        <h2>添加自定义应用</h2>
+      </div>
+      <button id="closeCustomSheet" class="text-button">取消</button>
+    </div>
+    <div class="form">
+      <label>应用名称<input id="customName" maxlength="12" placeholder="例如：相机"></label>
+      <label>URL Scheme<input id="customUrl" placeholder="例如：camera://"></label>
+      <label>颜色分组
+        <select id="customGroup">
+          <option>红色</option><option>橙色</option><option>黄色</option>
+          <option>绿色</option><option>青色</option><option>蓝色</option><option>紫色</option>
+          <option>粉色</option><option>棕色</option><option>黑色</option>
+          <option>白色</option><option>灰色</option>
+        </select>
+      </label>
+      <label>内容分类
+        <select id="customCategory">
+          <option>社交通讯</option><option>影音娱乐</option><option>购物消费</option>
+          <option>出行地图</option><option>金融支付</option><option>生活服务</option>
+          <option>知识阅读</option><option>效率工具</option><option>其他</option>
+        </select>
+      </label>
+      <button id="saveCustomApp" class="primary-button wide-button">添加到 ColorDock</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
