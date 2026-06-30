@@ -1,4 +1,4 @@
-const CACHE = "colordock-v12";
+const CACHE = "colordock-v13";
 const ASSETS = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", event => {
