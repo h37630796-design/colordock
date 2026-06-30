@@ -1,0 +1,17 @@
+{
+  "name": "ColorDock 彩色应用启动器",
+  "short_name": "ColorDock",
+  "description": "按颜色整理和启动常用应用",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ee",
+  "theme_color": "#f6f3ee",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
