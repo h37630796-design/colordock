@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="ColorDock">
   <title>ColorDock</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body>
   <main class="shell">
@@ -152,6 +152,15 @@
           <strong>识别结果</strong><small id="importResultCount">0 个匹配</small>
         </div>
         <div id="importResultList"></div>
+        <div class="import-complete">
+          <p>有漏掉的 App？搜索目录后手动勾选。</p>
+          <div class="import-search">
+            <input id="importSearchInput" type="search" placeholder="搜索 App 名称">
+            <button id="clearImportSearch" class="text-button hidden">清除</button>
+          </div>
+          <div id="importSuggestionList" class="import-suggestion-list"></div>
+          <button id="openCustomFromImport" class="secondary-button wide-button">目录里没有？手动添加</button>
+        </div>
         <button id="confirmImportButton" class="primary-button wide-button">添加识别到的应用</button>
       </div>
     </div>
@@ -189,6 +198,6 @@
   </section>
 
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>
