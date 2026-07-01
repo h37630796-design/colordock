@@ -860,3 +860,15 @@ header {
 .import-result-row .catalog-icon { width: 38px; height: 38px; border-radius: 10px; font-size: 12px; }
 .import-result-row label { flex: 1; font-size: 12px; }
 .import-result-row input { width: 18px; height: 18px; accent-color: #302e2c; }
+.import-complete { margin-top: 20px; padding-top: 17px; border-top: 1px solid var(--line); }
+.import-complete > p { margin: 0 0 10px; color: var(--muted); font-size: 11px; }
+.import-search { display: flex; align-items: center; gap: 8px; }
+.import-search input { min-width: 0; flex: 1; height: 40px; padding: 0 13px; border: 1px solid var(--line); border-radius: 12px; background: #f7f5f2; font: inherit; }
+.import-suggestion-list { display: grid; gap: 2px; margin: 10px 0 13px; max-height: 240px; overflow: auto; }
+.import-suggestion { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+.import-suggestion > span:nth-child(2) { min-width: 0; flex: 1; }
+.import-suggestion strong, .import-suggestion small { display: block; }
+.import-suggestion strong { font-size: 12px; }
+.import-suggestion small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.import-suggestion input { width: 18px; height: 18px; accent-color: #302e2c; }
+.import-results .primary-button { margin-top: 14px; }
