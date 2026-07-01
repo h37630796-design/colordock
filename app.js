@@ -67,6 +67,7 @@ let classificationMode = localStorage.getItem("colordock-mode") || "color";
 let catalogMode = "all";
 let toastTimer;
 let detectedAppIds = [];
+let manuallySelectedImportIds = new Set();
 let ocrLibraryPromise;
 
 const filters = document.querySelector("#filters");
@@ -262,6 +263,7 @@ function closeCustomSheet() {
 
 function openImportSheet() {
   document.querySelector("#importSheet").classList.remove("hidden");
+  renderImportSuggestions("");
 }
 
 function closeImportSheet() {
@@ -311,7 +313,7 @@ async function recognizeScreenshots(files) {
   const results = document.querySelector("#importResults");
   progress.classList.remove("hidden");
   results.classList.add("hidden");
-  detectedAppIds = [];
+  const previousDetections = new Set(detectedAppIds);
   let recognizedText = "";
   let currentFileIndex = 0;
   let worker;
@@ -335,14 +337,17 @@ async function recognizeScreenshots(files) {
       recognizedText += `\n${result.data.text}`;
     }
     const normalized = recognizedText.replace(/\s+/g, "").toLowerCase();
-    detectedAppIds = catalog
+    const batchDetections = catalog
       .filter(app => {
         const aliases = appAliases[app.id] || [app.name];
         return aliases.some(alias => normalized.includes(alias.replace(/\s+/g, "").toLowerCase()));
       })
       .map(app => app.id);
+    detectedAppIds = [...new Set([...previousDetections, ...batchDetections])];
     bar.style.width = "100%";
-    text.textContent = detectedAppIds.length ? "识别完成" : "暂未匹配到目录中的应用";
+    text.textContent = batchDetections.length
+      ? `本次识别到 ${batchDetections.length} 个，已合并去重`
+      : "本次暂未匹配，可在下方搜索补充";
     renderImportResults();
   } catch (error) {
     text.textContent = "识别失败，请换一张更清晰的截图";
@@ -356,7 +361,7 @@ function renderImportResults() {
   const results = document.querySelector("#importResults");
   const list = document.querySelector("#importResultList");
   const apps = catalog.filter(app => detectedAppIds.includes(app.id));
-  document.querySelector("#importResultCount").textContent = `${apps.length} 个匹配`;
+  document.querySelector("#importResultCount").textContent = `${apps.length} 个已识别`;
   list.innerHTML = apps.length ? apps.map(app => `
     <div class="import-result-row">
       <span class="catalog-icon ${["白色", "黄色"].includes(app.group) ? "light-icon" : ""}" style="--app-color:${app.color}">${escapeHTML(app.short)}</span>
@@ -364,12 +369,47 @@ function renderImportResults() {
       <input type="checkbox" value="${app.id}" checked aria-label="导入${escapeHTML(app.name)}">
     </div>
   `).join("") : `<div class="catalog-empty"><strong>没有匹配结果</strong><small>建议截取普通桌面页面，并确保图标名称清晰可见。</small></div>`;
-  document.querySelector("#confirmImportButton").classList.toggle("hidden", apps.length === 0);
+  updateImportConfirmButton();
+  renderImportSuggestions(document.querySelector("#importSearchInput").value);
   results.classList.remove("hidden");
 }
 
+function renderImportSuggestions(query = "") {
+  const list = document.querySelector("#importSuggestionList");
+  if (!list) return;
+  const normalized = query.trim().toLowerCase();
+  const detected = new Set(detectedAppIds);
+  const matches = catalog
+    .filter(app => !detected.has(app.id))
+    .filter(app => !normalized || app.name.toLowerCase().includes(normalized) ||
+      (appAliases[app.id] || []).some(alias => alias.toLowerCase().includes(normalized)))
+    .slice(0, normalized ? 12 : 6);
+  list.innerHTML = matches.map(app => `
+    <label class="import-suggestion">
+      <span class="catalog-icon ${["白色", "黄色"].includes(app.group) ? "light-icon" : ""}" style="--app-color:${app.color}">${escapeHTML(app.short)}</span>
+      <span><strong>${escapeHTML(app.name)}</strong><small>${app.category}</small></span>
+      <input type="checkbox" value="${app.id}" ${manuallySelectedImportIds.has(app.id) ? "checked" : ""}>
+    </label>
+  `).join("") || `<div class="catalog-empty"><small>目录中没有找到，可以手动添加。</small></div>`;
+  list.querySelectorAll("input").forEach(input => {
+    input.addEventListener("change", () => {
+      if (input.checked) manuallySelectedImportIds.add(input.value);
+      else manuallySelectedImportIds.delete(input.value);
+      updateImportConfirmButton();
+    });
+  });
+}
+
+function updateImportConfirmButton() {
+  const button = document.querySelector("#confirmImportButton");
+  const total = detectedAppIds.length + manuallySelectedImportIds.size;
+  button.classList.toggle("hidden", total === 0);
+  button.textContent = total ? `添加选中的应用（${total}）` : "添加选中的应用";
+}
+
 function confirmScreenshotImport() {
-  const ids = [...document.querySelectorAll("#importResultList input:checked")].map(input => input.value);
+  const detectedIds = [...document.querySelectorAll("#importResultList input:checked")].map(input => input.value);
+  const ids = [...new Set([...detectedIds, ...manuallySelectedImportIds])];
   ids.forEach(id => selected.add(id));
   save();
   renderCatalog(searchInput.value);
@@ -378,6 +418,9 @@ function confirmScreenshotImport() {
   renderFavorites();
   closeImportSheet();
   showToast(`已导入 ${ids.length} 个应用`);
+  detectedAppIds = [];
+  manuallySelectedImportIds.clear();
+  document.querySelector("#screenshotInput").value = "";
 }
 
 function addCustomApp() {
@@ -443,6 +486,19 @@ document.querySelector("#screenshotImportButton").addEventListener("click", open
 document.querySelector("#closeImportSheet").addEventListener("click", closeImportSheet);
 document.querySelector("#screenshotInput").addEventListener("change", event => recognizeScreenshots([...event.target.files]));
 document.querySelector("#confirmImportButton").addEventListener("click", confirmScreenshotImport);
+document.querySelector("#importSearchInput").addEventListener("input", event => {
+  document.querySelector("#clearImportSearch").classList.toggle("hidden", !event.target.value);
+  renderImportSuggestions(event.target.value);
+});
+document.querySelector("#clearImportSearch").addEventListener("click", () => {
+  document.querySelector("#importSearchInput").value = "";
+  document.querySelector("#clearImportSearch").classList.add("hidden");
+  renderImportSuggestions("");
+});
+document.querySelector("#openCustomFromImport").addEventListener("click", () => {
+  closeImportSheet();
+  openCustomSheet();
+});
 document.querySelector("#closeCustomSheet").addEventListener("click", closeCustomSheet);
 document.querySelector("#saveCustomApp").addEventListener("click", addCustomApp);
 
